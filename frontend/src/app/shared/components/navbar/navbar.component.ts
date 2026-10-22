@@ -10,53 +10,55 @@ import { AuthService } from '../../../core/services/auth.service';
   template: `
     <header class="app-navbar">
       <div class="nav-container">
-        <div class="nav-brand-group">
-          <a routerLink="/" class="nav-brand">
-            <div class="brand-logo">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <!-- Left: Workspace identifier -->
+        <div class="workspace-group">
+          <a routerLink="/" class="workspace-link">
+            <div class="workspace-mark">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"></path><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"></path><path d="M10 6h4"></path><path d="M10 10h4"></path><path d="M10 14h4"></path><path d="M10 18h4"></path></svg>
             </div>
-            <div class="brand-text">
-              <span class="brand-title">HR Master</span>
-              <span class="brand-subtitle">Employee & Dept Management</span>
+            <div class="workspace-meta">
+              <span class="workspace-name">Tổ Chức Doanh Nghiệp</span>
+              <span class="workspace-env">Cổng Quản Trị Nội Bộ</span>
             </div>
           </a>
 
-          <nav class="nav-links">
-            <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <div class="divider-v"></div>
+
+          <!-- Center: Primary Tab Navigation -->
+          <nav class="nav-tabs">
+            <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-tab">
               Tổng quan
             </a>
-            <a routerLink="/employees" routerLinkActive="active" class="nav-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              Nhân viên
+            <a routerLink="/employees" routerLinkActive="active" class="nav-tab">
+              Nhân sự
             </a>
-            <a routerLink="/departments" routerLinkActive="active" class="nav-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            <a routerLink="/departments" routerLinkActive="active" class="nav-tab">
               Phòng ban
             </a>
           </nav>
         </div>
 
-        <div class="nav-user-group">
+        <!-- Right: User status & actions -->
+        <div class="user-group">
           <ng-container *ngIf="authService.currentUser$ | async as user; else loginBtn">
             <div class="user-pill">
-              <div class="avatar-circle">
+              <div class="user-avatar">
                 {{ user.username.charAt(0).toUpperCase() }}
               </div>
-              <div class="user-meta">
+              <div class="user-text">
                 <span class="user-name">{{ user.username }}</span>
-                <span class="role-badge" [ngClass]="'role-' + user.role.toLowerCase()">{{ user.role }}</span>
+                <span class="role-tag" [ngClass]="'role-' + user.role.toLowerCase()">{{ user.role }}</span>
               </div>
             </div>
-            <button class="btn btn-outline-danger btn-sm" (click)="logout()" title="Đăng xuất">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+
+            <button class="btn btn-outline-secondary btn-sm" (click)="logout()" title="Đăng xuất khỏi hệ thống">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
               Đăng xuất
             </button>
           </ng-container>
 
           <ng-template #loginBtn>
             <a routerLink="/login" class="btn btn-primary btn-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
               Đăng nhập
             </a>
           </ng-template>
@@ -67,131 +69,134 @@ import { AuthService } from '../../../core/services/auth.service';
   styles: [`
     .app-navbar {
       background: #ffffff;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid var(--border-subtle);
       position: sticky;
       top: 0;
-      z-index: 100;
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+      z-index: 50;
     }
     .nav-container {
-      max-width: 1280px;
+      max-width: 1320px;
       margin: 0 auto;
       padding: 0 24px;
-      height: 68px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    .nav-brand-group {
+    .workspace-group {
       display: flex;
       align-items: center;
-      gap: 36px;
+      gap: 20px;
     }
-    .nav-brand {
+    .workspace-link {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       text-decoration: none;
       color: inherit;
     }
-    .brand-logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      color: white;
+    .workspace-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      background: #0f172a;
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
     }
-    .brand-text {
+    .workspace-meta {
       display: flex;
       flex-direction: column;
     }
-    .brand-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #111827;
-      line-height: 1.2;
-      letter-spacing: -0.01em;
+    .workspace-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #0f172a;
+      line-height: 1.15;
     }
-    .brand-subtitle {
-      font-size: 0.72rem;
-      color: #6b7280;
-      font-weight: 500;
+    .workspace-env {
+      font-size: 0.7rem;
+      color: #64748b;
+      font-weight: 450;
     }
-    .nav-links {
+    .divider-v {
+      width: 1px;
+      height: 24px;
+      background: #e2e8f0;
+    }
+    .nav-tabs {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 2px;
     }
-    .nav-link {
+    .nav-tab {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border-radius: 8px;
-      color: #4b5563;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      color: #475569;
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 0.84rem;
       font-weight: 500;
-      transition: all 0.15s ease;
+      transition: all 0.1s ease;
     }
-    .nav-link:hover {
-      background: #f3f4f6;
-      color: #111827;
+    .nav-tab:hover {
+      color: #0f172a;
+      background: #f1f5f9;
     }
-    .nav-link.active {
-      background: #eff6ff;
-      color: #2563eb;
+    .nav-tab.active {
+      color: #0f172a;
       font-weight: 600;
+      background: #f1f5f9;
     }
-    .nav-user-group {
+    .user-group {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
     }
     .user-pill {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 4px 12px 4px 6px;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 20px;
+      gap: 8px;
+      padding: 3px 8px 3px 4px;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      background: #ffffff;
     }
-    .avatar-circle {
-      width: 30px;
-      height: 30px;
+    .user-avatar {
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
-      background: #3b82f6;
-      color: white;
+      background: #334155;
+      color: #ffffff;
       font-weight: 600;
-      font-size: 0.85rem;
+      font-size: 0.72rem;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .user-meta {
+    .user-text {
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      gap: 6px;
     }
     .user-name {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #1f2937;
-      line-height: 1.1;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #1e293b;
     }
-    .role-badge {
+    .role-tag {
       font-size: 0.65rem;
       font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
       text-transform: uppercase;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.04em;
     }
-    .role-admin { color: #dc2626; }
-    .role-manager { color: #d97706; }
-    .role-employee { color: #059669; }
+    .role-admin { background: #fef2f2; color: #b91c1c; }
+    .role-manager { background: #fffbeb; color: #b45309; }
+    .role-employee { background: #f0fdf4; color: #15803d; }
   `]
 })
 export class NavbarComponent {

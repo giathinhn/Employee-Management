@@ -12,7 +12,6 @@ import { PagedRequest, PagedResult } from '../../core/models/paged.model';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
 
-// Custom validator for age >= 18
 export function minimumAgeValidator(minAge: number) {
   return (control: AbstractControl): ValidationErrors | null => {
     if (!control.value) return null;
@@ -32,167 +31,190 @@ export function minimumAgeValidator(minAge: number) {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, PaginationComponent, ConfirmModalComponent],
   template: `
-    <div class="page-container">
-      <div class="page-header">
+    <div class="view-wrapper">
+      <!-- Breadcrumb & Header -->
+      <div class="view-header">
         <div>
-          <h1 class="page-title">Quản lý Nhân Viên</h1>
-          <p class="page-subtitle">Tìm kiếm, lọc, phân trang và quản lý hồ sơ nhân sự theo tiêu chuẩn</p>
+          <div class="view-breadcrumb">
+            <span>Tổ chức</span>
+            <span class="sep">/</span>
+            <span class="current">Danh bạ nhân sự</span>
+          </div>
+          <h1 class="view-title">Hồ Sơ Nhân Sự</h1>
+          <p class="view-desc">Quản lý danh sách nhân viên, thông tin hợp đồng và phân công bộ phận</p>
         </div>
-        <div class="header-actions" *ngIf="authService.isManager">
-          <button class="btn btn-primary" (click)="openCreateModal()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Thêm Nhân Viên
+
+        <div class="view-actions" *ngIf="authService.isManager">
+          <button class="btn btn-secondary btn-sm" (click)="loadEmployees()" title="Làm mới danh sách">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>
+            Làm mới
+          </button>
+          <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Thêm nhân viên mới
           </button>
         </div>
       </div>
 
-      <!-- Filters & Search Toolbar -->
-      <div class="filter-card">
-        <div class="filter-grid">
-          <!-- Search input -->
-          <div class="filter-group span-2">
-            <label class="filter-label">Tìm kiếm</label>
-            <div class="search-input-wrap">
-              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" 
-                     class="form-control with-icon" 
-                     placeholder="Tìm theo tên, email, số điện thoại, chức vụ..."
-                     [value]="pagedRequest.searchTerm || ''"
-                     (input)="onSearchChanged($event)">
-            </div>
-          </div>
+      <!-- Integrated Control Toolbar -->
+      <div class="toolbar-box">
+        <div class="search-cell">
+          <svg class="search-svg" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" 
+                 class="search-text-input" 
+                 placeholder="Tìm theo họ tên, email, số điện thoại, chức vụ..."
+                 [value]="pagedRequest.searchTerm || ''"
+                 (input)="onSearchChanged($event)">
+          <span class="search-key-hint">/</span>
+        </div>
 
-          <!-- Department dropdown filter -->
-          <div class="filter-group">
-            <label class="filter-label">Phòng ban</label>
-            <select class="form-control" [value]="pagedRequest.departmentId || ''" (change)="onDepartmentFilter($event)">
-              <option value="">Tất cả phòng ban</option>
+        <div class="filters-cell">
+          <!-- Dept Filter -->
+          <div class="select-wrapper">
+            <select class="filter-dropdown" [value]="pagedRequest.departmentId || ''" (change)="onDepartmentFilter($event)">
+              <option value="">Phòng ban: Tất cả</option>
               <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
             </select>
           </div>
 
-          <!-- Status dropdown filter -->
-          <div class="filter-group">
-            <label class="filter-label">Trạng thái</label>
-            <select class="form-control" [value]="pagedRequest.status || ''" (change)="onStatusFilter($event)">
-              <option value="">Tất cả trạng thái</option>
-              <option [value]="EmployeeStatus.Active">Đang làm việc (Active)</option>
-              <option [value]="EmployeeStatus.OnLeave">Nghỉ phép (On Leave)</option>
-              <option [value]="EmployeeStatus.Terminated">Đã thôi việc (Terminated)</option>
+          <!-- Status Filter -->
+          <div class="select-wrapper">
+            <select class="filter-dropdown" [value]="pagedRequest.status || ''" (change)="onStatusFilter($event)">
+              <option value="">Trạng thái: Tất cả</option>
+              <option [value]="EmployeeStatus.Active">Đang làm việc</option>
+              <option [value]="EmployeeStatus.OnLeave">Nghỉ phép</option>
+              <option [value]="EmployeeStatus.Terminated">Đã thôi việc</option>
             </select>
           </div>
 
           <!-- Min Salary -->
-          <div class="filter-group">
-            <label class="filter-label">Lương tối thiểu (VNĐ)</label>
+          <div class="salary-input-wrapper">
             <input type="number" 
-                   class="form-control" 
-                   placeholder="VD: 15000000"
+                   class="filter-salary-input" 
+                   placeholder="Lương tối thiểu"
                    [value]="pagedRequest.minSalary || ''"
                    (change)="onMinSalaryFilter($event)">
           </div>
 
-          <!-- Reset Filter Button -->
-          <div class="filter-group filter-actions-group">
-            <label class="filter-label">&nbsp;</label>
-            <button class="btn btn-outline-secondary w-100" (click)="resetFilters()" title="Xóa tất cả bộ lọc">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-              Đặt lại lọc
-            </button>
-          </div>
+          <!-- Reset Filter -->
+          <button *ngIf="hasActiveFilters()" 
+                  class="btn-clear-filter" 
+                  (click)="resetFilters()" 
+                  title="Xóa bộ lọc">
+            ✕ Bỏ lọc
+          </button>
         </div>
       </div>
 
-      <!-- Employees Table Card -->
-      <div class="table-card">
-        <div class="table-responsive">
-          <table class="data-table">
+      <!-- Main Data Table Container -->
+      <div class="data-container">
+        <div class="table-scroll">
+          <table class="grid-table">
             <thead>
               <tr>
-                <th (click)="sort('name')" class="sortable">
-                  Họ và Tên
-                  <span class="sort-icon">{{ getSortIcon('name') }}</span>
+                <th (click)="sort('name')" class="col-sortable">
+                  <span class="th-content">Nhân viên <span class="sort-glyph">{{ getSortIcon('name') }}</span></span>
                 </th>
-                <th>Thông tin liên hệ</th>
-                <th (click)="sort('department')" class="sortable">
-                  Phòng ban
-                  <span class="sort-icon">{{ getSortIcon('department') }}</span>
+                <th>Liên hệ</th>
+                <th (click)="sort('department')" class="col-sortable">
+                  <span class="th-content">Phòng ban <span class="sort-glyph">{{ getSortIcon('department') }}</span></span>
                 </th>
-                <th (click)="sort('position')" class="sortable">
-                  Chức vụ
-                  <span class="sort-icon">{{ getSortIcon('position') }}</span>
+                <th (click)="sort('position')" class="col-sortable">
+                  <span class="th-content">Chức danh <span class="sort-glyph">{{ getSortIcon('position') }}</span></span>
                 </th>
-                <th (click)="sort('salary')" class="sortable" style="text-align: right;">
-                  Mức lương
-                  <span class="sort-icon">{{ getSortIcon('salary') }}</span>
+                <th (click)="sort('salary')" class="col-sortable text-right">
+                  <span class="th-content justify-end">Mức lương <span class="sort-glyph">{{ getSortIcon('salary') }}</span></span>
                 </th>
-                <th (click)="sort('status')" class="sortable" style="text-align: center;">
-                  Trạng thái
-                  <span class="sort-icon">{{ getSortIcon('status') }}</span>
+                <th (click)="sort('status')" class="col-sortable" style="text-align: center;">
+                  <span class="th-content justify-center">Trạng thái <span class="sort-glyph">{{ getSortIcon('status') }}</span></span>
                 </th>
-                <th style="width: 140px; text-align: right;">Thao tác</th>
+                <th style="width: 110px; text-align: right;">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let emp of pagedResult?.items">
+              <tr *ngFor="let emp of pagedResult?.items" class="table-row">
+                <!-- Employee Column -->
                 <td>
-                  <div class="emp-profile-cell">
-                    <div class="emp-avatar">{{ emp.firstName.charAt(0) }}{{ emp.lastName.charAt(0) }}</div>
-                    <div>
-                      <strong class="emp-name" (click)="openDetailModal(emp)">{{ emp.fullName }}</strong>
-                      <span class="emp-meta">Ngày vào: {{ emp.hireDate | date:'dd/MM/yyyy' }}</span>
+                  <div class="person-cell">
+                    <div class="person-avatar">{{ getInitials(emp) }}</div>
+                    <div class="person-info">
+                      <span class="person-name" (click)="openDetailModal(emp)">{{ emp.fullName }}</span>
+                      <span class="person-meta">Vào làm: {{ emp.hireDate | date:'dd/MM/yyyy' }}</span>
                     </div>
                   </div>
                 </td>
+
+                <!-- Contact Column -->
                 <td>
-                  <div class="contact-cell">
-                    <span class="emp-email">{{ emp.email }}</span>
-                    <span class="emp-phone" *ngIf="emp.phoneNumber">{{ emp.phoneNumber }}</span>
+                  <div class="contact-info">
+                    <span class="contact-email">{{ emp.email }}</span>
+                    <span class="contact-phone" *ngIf="emp.phoneNumber">{{ emp.phoneNumber }}</span>
                   </div>
                 </td>
+
+                <!-- Department Column -->
                 <td>
-                  <span class="badge-dept">{{ emp.departmentName }}</span>
+                  <span class="dept-pill">{{ emp.departmentName }}</span>
                 </td>
+
+                <!-- Position Column -->
                 <td>
-                  <span class="emp-position">{{ emp.position }}</span>
+                  <span class="position-text">{{ emp.position }}</span>
                 </td>
+
+                <!-- Salary Column -->
                 <td style="text-align: right;">
-                  <strong class="salary-val">{{ emp.salary | number:'1.0-0' }} đ</strong>
+                  <span class="salary-mono">{{ emp.salary | number:'1.0-0' }} ₫</span>
                 </td>
+
+                <!-- Status Column with Human-crafted dot -->
                 <td style="text-align: center;">
-                  <span class="status-pill" [ngClass]="'status-' + emp.status">
+                  <span class="status-indicator" [ngClass]="'status-' + (emp.status === 1 ? 'active' : emp.status === 2 ? 'onleave' : 'terminated')">
                     {{ emp.status === 1 ? 'Đang làm việc' : emp.status === 2 ? 'Nghỉ phép' : 'Đã thôi việc' }}
                   </span>
                 </td>
+
+                <!-- Action Column -->
                 <td style="text-align: right;">
-                  <div class="table-actions">
-                    <button class="btn-icon text-info" (click)="openDetailModal(emp)" title="Xem chi tiết">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <div class="action-buttons">
+                    <button class="icon-action-btn" (click)="openDetailModal(emp)" title="Xem hồ sơ">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
-                    <button class="btn-icon text-primary" *ngIf="authService.isManager" (click)="openEditModal(emp)" title="Chỉnh sửa">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    <button class="icon-action-btn" *ngIf="authService.isManager" (click)="openEditModal(emp)" title="Chỉnh sửa">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
                     </button>
-                    <button class="btn-icon text-danger" *ngIf="authService.isAdmin" (click)="confirmDelete(emp)" title="Xóa nhân viên">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    <button class="icon-action-btn text-danger-hover" *ngIf="authService.isAdmin" (click)="confirmDelete(emp)" title="Xóa nhân sự">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                     </button>
                   </div>
                 </td>
               </tr>
+
+              <!-- Empty state -->
               <tr *ngIf="pagedResult?.items?.length === 0 && !isLoading">
-                <td colspan="7" class="empty-cell">
-                  Không tìm thấy nhân viên nào phù hợp với bộ lọc hiện tại.
+                <td colspan="7" class="empty-state-cell">
+                  <div class="empty-state-inner">
+                    <span class="empty-title">Không tìm thấy nhân sự phù hợp</span>
+                    <span class="empty-desc">Thử thay đổi từ khóa tìm kiếm hoặc bỏ các tiêu chí lọc phòng ban/lương.</span>
+                    <button *ngIf="hasActiveFilters()" class="btn btn-secondary btn-sm mt-3" (click)="resetFilters()">Đặt lại bộ lọc</button>
+                  </div>
                 </td>
               </tr>
+
+              <!-- Loading state -->
               <tr *ngIf="isLoading">
-                <td colspan="7" class="empty-cell">
-                  Đang tải dữ liệu nhân viên...
+                <td colspan="7" class="empty-state-cell">
+                  <div class="loading-state">
+                    <span class="spinner"></span>
+                    <span>Đang tải danh bạ nhân sự...</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Pagination -->
+        <!-- Server-side Pagination -->
         <app-pagination 
           [totalCount]="pagedResult?.totalCount || 0"
           [pageSize]="pagedRequest.pageSize"
@@ -202,18 +224,21 @@ export function minimumAgeValidator(minAge: number) {
         </app-pagination>
       </div>
 
-      <!-- Add / Edit Modal -->
-      <div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeModal()">
-        <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3 class="modal-title">{{ isEditing ? 'Cập nhật Nhân Viên' : 'Thêm Nhân Viên Mới' }}</h3>
-            <button class="modal-close-btn" (click)="closeModal()">×</button>
+      <!-- Add / Edit Modal Drawer -->
+      <div class="modal-layer" *ngIf="isModalOpen" (click)="closeModal()">
+        <div class="modal-window modal-lg" (click)="$event.stopPropagation()">
+          <div class="modal-top">
+            <div>
+              <h3 class="modal-heading">{{ isEditing ? 'Cập Nhật Hồ Sơ Nhân Viên' : 'Tiếp Nhận Nhân Sự Mới' }}</h3>
+              <p class="modal-subheading">Nhập thông tin nhân sự theo hồ sơ lao động chính thức</p>
+            </div>
+            <button class="modal-x-btn" (click)="closeModal()">✕</button>
           </div>
 
           <form [formGroup]="empForm" (ngSubmit)="onSubmit()">
-            <div class="modal-body modal-grid-2">
+            <div class="modal-scroll-body form-grid">
               <div class="form-group">
-                <label for="firstName" class="form-label required">Họ đệm</label>
+                <label for="firstName" class="form-label required">Họ và tên đệm</label>
                 <input id="firstName" 
                        type="text" 
                        class="form-control" 
@@ -221,12 +246,12 @@ export function minimumAgeValidator(minAge: number) {
                        placeholder="VD: Nguyễn Văn"
                        [class.is-invalid]="f['firstName'].touched && f['firstName'].invalid">
                 <div class="invalid-feedback" *ngIf="f['firstName'].touched && f['firstName'].invalid">
-                  <span *ngIf="f['firstName'].errors?.['required']">Họ đệm là bắt buộc.</span>
+                  Vui lòng nhập họ và tên đệm.
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="lastName" class="form-label required">Tên</label>
+                <label for="lastName" class="form-label required">Tên chính</label>
                 <input id="lastName" 
                        type="text" 
                        class="form-control" 
@@ -234,34 +259,33 @@ export function minimumAgeValidator(minAge: number) {
                        placeholder="VD: An"
                        [class.is-invalid]="f['lastName'].touched && f['lastName'].invalid">
                 <div class="invalid-feedback" *ngIf="f['lastName'].touched && f['lastName'].invalid">
-                  <span *ngIf="f['lastName'].errors?.['required']">Tên là bắt buộc.</span>
+                  Vui lòng nhập tên chính.
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="email" class="form-label required">Địa chỉ Email</label>
+                <label for="email" class="form-label required">Email cơ quan</label>
                 <input id="email" 
                        type="email" 
                        class="form-control" 
                        formControlName="email" 
-                       placeholder="VD: an.nguyen@company.com"
+                       placeholder="an.nguyen@company.com"
                        [class.is-invalid]="f['email'].touched && f['email'].invalid">
                 <div class="invalid-feedback" *ngIf="f['email'].touched && f['email'].invalid">
-                  <span *ngIf="f['email'].errors?.['required']">Email là bắt buộc.</span>
-                  <span *ngIf="f['email'].errors?.['email']">Email không đúng định dạng.</span>
+                  Email không hợp lệ hoặc bị bỏ trống.
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="phoneNumber" class="form-label">Số điện thoại</label>
+                <label for="phoneNumber" class="form-label">Điện thoại liên hệ</label>
                 <input id="phoneNumber" 
                        type="text" 
                        class="form-control" 
                        formControlName="phoneNumber" 
-                       placeholder="VD: 0912345678"
+                       placeholder="0912345678"
                        [class.is-invalid]="f['phoneNumber'].touched && f['phoneNumber'].invalid">
                 <div class="invalid-feedback" *ngIf="f['phoneNumber'].touched && f['phoneNumber'].invalid">
-                  <span *ngIf="f['phoneNumber'].errors?.['pattern']">Số điện thoại Việt Nam (VD: 0912345678 hoặc +84912345678).</span>
+                  Số điện thoại Việt Nam (VD: 0912345678).
                 </div>
               </div>
 
@@ -273,66 +297,65 @@ export function minimumAgeValidator(minAge: number) {
                        formControlName="dateOfBirth"
                        [class.is-invalid]="f['dateOfBirth'].touched && f['dateOfBirth'].invalid">
                 <div class="invalid-feedback" *ngIf="f['dateOfBirth'].touched && f['dateOfBirth'].invalid">
-                  <span *ngIf="f['dateOfBirth'].errors?.['required']">Ngày sinh là bắt buộc.</span>
-                  <span *ngIf="f['dateOfBirth'].errors?.['minimumAge']">Nhân viên phải đủ từ 18 tuổi trở lên.</span>
+                  <span *ngIf="f['dateOfBirth'].errors?.['required']">Vui lòng chọn ngày sinh.</span>
+                  <span *ngIf="f['dateOfBirth'].errors?.['minimumAge']">Nhân viên phải từ 18 tuổi trở lên.</span>
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="hireDate" class="form-label required">Ngày vào làm</label>
+                <label for="hireDate" class="form-label required">Ngày bắt đầu công tác</label>
                 <input id="hireDate" 
                        type="date" 
                        class="form-control" 
                        formControlName="hireDate"
                        [class.is-invalid]="f['hireDate'].touched && f['hireDate'].invalid">
                 <div class="invalid-feedback" *ngIf="f['hireDate'].touched && f['hireDate'].invalid">
-                  <span *ngIf="f['hireDate'].errors?.['required']">Ngày vào làm là bắt buộc.</span>
+                  Vui lòng chọn ngày vào làm.
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="departmentId" class="form-label required">Phòng ban</label>
+                <label for="departmentId" class="form-label required">Phòng ban phân công</label>
                 <select id="departmentId" 
                         class="form-control" 
                         formControlName="departmentId"
                         [class.is-invalid]="f['departmentId'].touched && f['departmentId'].invalid">
-                  <option value="">Chọn phòng ban</option>
+                  <option value="">Chọn phòng ban trực thuộc</option>
                   <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
                 </select>
                 <div class="invalid-feedback" *ngIf="f['departmentId'].touched && f['departmentId'].invalid">
-                  <span *ngIf="f['departmentId'].errors?.['required']">Vui lòng chọn phòng ban.</span>
+                  Vui lòng chọn phòng ban.
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="position" class="form-label required">Chức vụ / Vị trí</label>
+                <label for="position" class="form-label required">Chức danh công việc</label>
                 <input id="position" 
                        type="text" 
                        class="form-control" 
                        formControlName="position" 
-                       placeholder="VD: Chuyên viên Frontend Angular"
+                       placeholder="VD: Senior Software Engineer"
                        [class.is-invalid]="f['position'].touched && f['position'].invalid">
                 <div class="invalid-feedback" *ngIf="f['position'].touched && f['position'].invalid">
-                  <span *ngIf="f['position'].errors?.['required']">Chức vụ là bắt buộc.</span>
+                  Chức vụ là bắt buộc.
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="salary" class="form-label required">Mức lương (VNĐ)</label>
+                <label for="salary" class="form-label required">Mức lương thỏa thuận (VNĐ)</label>
                 <input id="salary" 
                        type="number" 
                        class="form-control" 
                        formControlName="salary" 
-                       placeholder="VD: 25000000"
+                       placeholder="VD: 30000000"
                        [class.is-invalid]="f['salary'].touched && f['salary'].invalid">
                 <div class="invalid-feedback" *ngIf="f['salary'].touched && f['salary'].invalid">
-                  <span *ngIf="f['salary'].errors?.['required']">Mức lương là bắt buộc.</span>
-                  <span *ngIf="f['salary'].errors?.['min']">Mức lương tối thiểu 1.000.000 VNĐ.</span>
+                  Mức lương từ 1.000.000 VNĐ trở lên.
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="status" class="form-label required">Trạng thái làm việc</label>
+                <label for="status" class="form-label required">Trạng thái công tác</label>
                 <select id="status" class="form-control" formControlName="status">
                   <option [value]="EmployeeStatus.Active">Đang làm việc (Active)</option>
                   <option [value]="EmployeeStatus.OnLeave">Nghỉ phép (On Leave)</option>
@@ -341,10 +364,10 @@ export function minimumAgeValidator(minAge: number) {
               </div>
             </div>
 
-            <div class="modal-actions">
-              <button type="button" class="btn btn-secondary" (click)="closeModal()">Hủy</button>
-              <button type="submit" class="btn btn-primary" [disabled]="empForm.invalid || isSubmitting">
-                {{ isSubmitting ? 'Đang lưu...' : (isEditing ? 'Lưu thay đổi' : 'Thêm nhân viên') }}
+            <div class="modal-bottom">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="closeModal()">Đóng</button>
+              <button type="submit" class="btn btn-primary btn-sm" [disabled]="empForm.invalid || isSubmitting">
+                {{ isSubmitting ? 'Đang lưu hồ sơ...' : (isEditing ? 'Lưu thay đổi' : 'Lưu nhân viên') }}
               </button>
             </div>
           </form>
@@ -352,58 +375,65 @@ export function minimumAgeValidator(minAge: number) {
       </div>
 
       <!-- Employee Details Modal -->
-      <div class="modal-backdrop" *ngIf="isDetailModalOpen" (click)="isDetailModalOpen = false">
-        <div class="modal-card modal-md" (click)="$event.stopPropagation()" *ngIf="selectedEmployee as emp">
-          <div class="modal-header">
-            <h3 class="modal-title">Hồ sơ chi tiết Nhân Viên</h3>
-            <button class="modal-close-btn" (click)="isDetailModalOpen = false">×</button>
+      <div class="modal-layer" *ngIf="isDetailModalOpen" (click)="isDetailModalOpen = false">
+        <div class="modal-window modal-md" (click)="$event.stopPropagation()" *ngIf="selectedEmployee as emp">
+          <div class="modal-top">
+            <div>
+              <h3 class="modal-heading">Hồ Sơ Nhân Sự</h3>
+              <p class="modal-subheading">Mã hồ sơ #{{ emp.id }}</p>
+            </div>
+            <button class="modal-x-btn" (click)="isDetailModalOpen = false">✕</button>
           </div>
-          <div class="modal-body">
-            <div class="profile-header-card">
-              <div class="profile-avatar">{{ emp.firstName.charAt(0) }}{{ emp.lastName.charAt(0) }}</div>
+
+          <div class="modal-scroll-body">
+            <div class="profile-card-top">
+              <div class="profile-lg-avatar">{{ getInitials(emp) }}</div>
               <div>
-                <h3 class="profile-name">{{ emp.fullName }}</h3>
-                <span class="profile-position">{{ emp.position }}</span>
-                <span class="status-pill mt-1" [ngClass]="'status-' + emp.status">
-                  {{ emp.status === 1 ? 'Đang làm việc' : emp.status === 2 ? 'Nghỉ phép' : 'Đã thôi việc' }}
-                </span>
+                <h4 class="profile-title">{{ emp.fullName }}</h4>
+                <span class="profile-sub">{{ emp.position }} • {{ emp.departmentName }}</span>
+                <div class="mt-2">
+                  <span class="status-indicator" [ngClass]="'status-' + (emp.status === 1 ? 'active' : emp.status === 2 ? 'onleave' : 'terminated')">
+                    {{ emp.status === 1 ? 'Đang làm việc' : emp.status === 2 ? 'Nghỉ phép' : 'Đã thôi việc' }}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div class="profile-details-grid">
-              <div class="detail-row">
-                <span class="detail-label">Phòng ban:</span>
-                <span class="detail-value"><strong>{{ emp.departmentName }}</strong> ({{ emp.departmentCode }})</span>
+            <div class="profile-meta-list">
+              <div class="meta-item">
+                <span class="meta-label">Phòng ban:</span>
+                <span class="meta-val"><strong>{{ emp.departmentName }}</strong> ({{ emp.departmentCode }})</span>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Email công việc:</span>
-                <span class="detail-value">{{ emp.email }}</span>
+              <div class="meta-item">
+                <span class="meta-label">Email cơ quan:</span>
+                <span class="meta-val">{{ emp.email }}</span>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Số điện thoại:</span>
-                <span class="detail-value">{{ emp.phoneNumber || 'Chưa cập nhật' }}</span>
+              <div class="meta-item">
+                <span class="meta-label">Điện thoại liên hệ:</span>
+                <span class="meta-val">{{ emp.phoneNumber || 'Chưa cung cấp' }}</span>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Ngày sinh:</span>
-                <span class="detail-value">{{ emp.dateOfBirth | date:'dd/MM/yyyy' }}</span>
+              <div class="meta-item">
+                <span class="meta-label">Ngày sinh:</span>
+                <span class="meta-val">{{ emp.dateOfBirth | date:'dd/MM/yyyy' }}</span>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Ngày vào làm:</span>
-                <span class="detail-value">{{ emp.hireDate | date:'dd/MM/yyyy' }}</span>
+              <div class="meta-item">
+                <span class="meta-label">Ngày vào cơ quan:</span>
+                <span class="meta-val">{{ emp.hireDate | date:'dd/MM/yyyy' }}</span>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Mức lương cơ bản:</span>
-                <span class="detail-value text-primary font-bold">{{ emp.salary | number:'1.0-0' }} VNĐ</span>
+              <div class="meta-item">
+                <span class="meta-label">Mức lương cơ bản:</span>
+                <span class="meta-val salary-mono">{{ emp.salary | number:'1.0-0' }} VNĐ</span>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Ngày tạo hồ sơ:</span>
-                <span class="detail-value">{{ emp.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              <div class="meta-item">
+                <span class="meta-label">Cập nhật lần cuối:</span>
+                <span class="meta-val text-muted">{{ (emp.updatedAt || emp.createdAt) | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
             </div>
           </div>
-          <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" (click)="isDetailModalOpen = false">Đóng</button>
-            <button type="button" class="btn btn-primary" *ngIf="authService.isManager" (click)="isDetailModalOpen = false; openEditModal(emp)">
+
+          <div class="modal-bottom">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="isDetailModalOpen = false">Đóng</button>
+            <button type="button" class="btn btn-primary btn-sm" *ngIf="authService.isManager" (click)="isDetailModalOpen = false; openEditModal(emp)">
               Chỉnh sửa hồ sơ
             </button>
           </div>
@@ -413,340 +443,480 @@ export function minimumAgeValidator(minAge: number) {
       <!-- Delete Confirmation Modal -->
       <app-confirm-modal 
         [isOpen]="isDeleteModalOpen"
-        [title]="'Xác nhận xóa nhân viên: ' + (empToDelete?.fullName || '')"
-        [message]="'Bạn có chắc chắn muốn xóa nhân viên ' + (empToDelete?.fullName || '') + ' (' + (empToDelete?.email || '') + ') khỏi hệ thống? Thao tác này không thể hoàn tác.'"
-        [confirmText]="'Xóa nhân viên'"
+        [title]="'Xác nhận xóa nhân sự: ' + (empToDelete?.fullName || '')"
+        [message]="'Bạn có chắc chắn muốn xóa nhân sự này khỏi hệ thống? Dữ liệu nhân viên sẽ được lưu trữ và thu hồi quyền truy cập.'"
+        [confirmText]="'Xóa hồ sơ'"
         (confirm)="onConfirmDelete()"
         (cancel)="isDeleteModalOpen = false">
       </app-confirm-modal>
     </div>
   `,
   styles: [`
-    .page-container {
-      max-width: 1280px;
+    .view-wrapper {
+      max-width: 1320px;
       margin: 0 auto;
-      padding: 32px 24px;
+      padding: 28px 24px 48px;
     }
-    .page-header {
+    .view-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 24px;
+      align-items: flex-end;
+      margin-bottom: 20px;
       flex-wrap: wrap;
       gap: 16px;
     }
-    .page-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #111827;
-      margin: 0 0 6px 0;
+    .view-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-bottom: 6px;
     }
-    .page-subtitle {
-      color: #6b7280;
-      font-size: 0.95rem;
+    .view-breadcrumb .sep { color: #cbd5e1; }
+    .view-breadcrumb .current { color: #0f172a; font-weight: 500; }
+    .view-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.025em;
+      margin: 0 0 4px 0;
+    }
+    .view-desc {
+      color: #64748b;
+      font-size: 0.85rem;
       margin: 0;
     }
-    .filter-card {
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-    .filter-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-      align-items: flex-end;
-    }
-    .span-2 {
-      grid-column: span 2;
-    }
-    @media (max-width: 768px) {
-      .span-2 { grid-column: span 1; }
-    }
-    .filter-group {
+    .view-actions {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
+      align-items: center;
+      gap: 8px;
     }
-    .filter-label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #4b5563;
-    }
-    .search-input-wrap {
-      position: relative;
-    }
-    .search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #9ca3af;
-    }
-    .with-icon {
-      padding-left: 38px;
-    }
-    .table-card {
+
+    /* Toolbar box */
+    .toolbar-box {
       background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+    }
+    .search-cell {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 260px;
+      max-width: 440px;
+    }
+    .search-svg {
+      position: absolute;
+      left: 10px;
+      color: #94a3b8;
+    }
+    .search-text-input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.84rem;
+      padding: 6px 32px 6px 32px;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      outline: none;
+      background: #f8fafc;
+      color: #0f172a;
+      transition: all 0.15s ease;
+    }
+    .search-text-input:focus {
+      background: #ffffff;
+      border-color: #0f172a;
+      box-shadow: 0 0 0 1px #0f172a;
+    }
+    .search-key-hint {
+      position: absolute;
+      right: 10px;
+      font-size: 0.7rem;
+      color: #94a3b8;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 3px;
+      padding: 1px 5px;
+      line-height: 1.2;
+    }
+    .filters-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-dropdown {
+      font-family: inherit;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      background: #ffffff;
+      color: #334155;
+      outline: none;
+      cursor: pointer;
+    }
+    .filter-dropdown:focus {
+      border-color: #0f172a;
+    }
+    .filter-salary-input {
+      font-family: inherit;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      background: #ffffff;
+      color: #334155;
+      outline: none;
+      width: 130px;
+    }
+    .filter-salary-input:focus {
+      border-color: #0f172a;
+    }
+    .btn-clear-filter {
+      background: none;
+      border: none;
+      font-size: 0.78rem;
+      color: #dc2626;
+      cursor: pointer;
+      padding: 6px 8px;
+      font-weight: 500;
+      border-radius: 4px;
+    }
+    .btn-clear-filter:hover {
+      background: #fef2f2;
+    }
+
+    /* Table container */
+    .data-container {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
       overflow: hidden;
     }
-    .table-responsive {
+    .table-scroll {
       overflow-x: auto;
     }
-    .data-table {
+    .grid-table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.9rem;
+      font-size: 0.84rem;
     }
-    .data-table th {
-      background: #f9fafb;
-      padding: 14px 18px;
+    .grid-table th {
+      background: #fafafa;
+      padding: 10px 16px;
+      font-size: 0.72rem;
       font-weight: 600;
-      color: #4b5563;
-      border-bottom: 1px solid #e5e7eb;
-      font-size: 0.82rem;
+      color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-    .data-table th.sortable {
-      cursor: pointer;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-subtle);
       user-select: none;
     }
-    .data-table th.sortable:hover {
-      background: #f3f4f6;
-      color: #111827;
+    .col-sortable {
+      cursor: pointer;
     }
-    .sort-icon {
-      margin-left: 4px;
-      font-size: 0.8rem;
-      color: #3b82f6;
+    .col-sortable:hover {
+      color: #0f172a;
+      background: #f4f4f5;
     }
-    .data-table td {
-      padding: 14px 18px;
-      border-bottom: 1px solid #f3f4f6;
+    .th-content {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .justify-end { justify-content: flex-end; }
+    .justify-center { justify-content: center; }
+    .text-right { text-align: right; }
+    .sort-glyph {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    .table-row {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.1s ease;
+    }
+    .table-row:hover {
+      background: #fafafa;
+    }
+    .table-row td {
+      padding: 12px 16px;
       vertical-align: middle;
-      color: #374151;
+      color: #334155;
     }
-    .data-table tr:hover {
-      background: #f9fafb;
-    }
-    .emp-profile-cell {
+
+    /* Person Column */
+    .person-cell {
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    .emp-avatar {
-      width: 36px;
-      height: 36px;
+    .person-avatar {
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      color: white;
+      background: #e2e8f0;
+      color: #334155;
+      font-size: 0.75rem;
       font-weight: 600;
-      font-size: 0.8rem;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      border: 1px solid #cbd5e1;
     }
-    .emp-name {
-      color: #111827;
-      cursor: pointer;
-      display: block;
-      transition: color 0.15s;
-    }
-    .emp-name:hover {
-      color: #2563eb;
-      text-decoration: underline;
-    }
-    .emp-meta {
-      font-size: 0.75rem;
-      color: #9ca3af;
-    }
-    .contact-cell {
+    .person-info {
       display: flex;
       flex-direction: column;
-      gap: 2px;
     }
-    .emp-email {
-      color: #374151;
-      font-size: 0.85rem;
-    }
-    .emp-phone {
-      color: #6b7280;
-      font-size: 0.78rem;
-    }
-    .badge-dept {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background: #f3f4f6;
-      color: #374151;
+    .person-name {
       font-weight: 500;
+      color: #0f172a;
+      cursor: pointer;
+      transition: color 0.12s;
+    }
+    .person-name:hover {
+      color: var(--accent);
+    }
+    .person-meta {
+      font-size: 0.72rem;
+      color: #94a3b8;
+    }
+
+    /* Contact info */
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .contact-email {
+      font-size: 0.8rem;
+      color: #334155;
+    }
+    .contact-phone {
+      font-size: 0.74rem;
+      color: #94a3b8;
+    }
+
+    /* Dept & Position */
+    .dept-pill {
+      display: inline-block;
+      font-size: 0.76rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+    }
+    .position-text {
+      color: #475569;
       font-size: 0.82rem;
     }
-    .emp-position {
-      color: #4b5563;
-      font-size: 0.875rem;
+    .salary-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #0f172a;
     }
-    .salary-val {
-      color: #059669;
-      font-weight: 600;
-    }
-    .status-pill {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .status-1 { background: #ecfdf5; color: #065f46; } /* Active */
-    .status-2 { background: #fffbeb; color: #92400e; } /* OnLeave */
-    .status-3 { background: #fef2f2; color: #991b1b; } /* Terminated */
 
-    .table-actions {
+    /* Actions */
+    .action-buttons {
       display: flex;
       justify-content: flex-end;
-      gap: 6px;
+      gap: 4px;
     }
-    .btn-icon {
+    .icon-action-btn {
       background: none;
       border: none;
-      padding: 6px;
-      border-radius: 6px;
-      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s;
-    }
-    .btn-icon:hover { background: #f3f4f6; }
-    .text-info { color: #0284c7; }
-    .text-primary { color: #2563eb; }
-    .text-danger { color: #dc2626; }
-    .empty-cell {
-      text-align: center;
-      padding: 48px !important;
-      color: #6b7280;
-      font-style: italic;
-    }
-
-    /* Modal styles */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(17, 24, 39, 0.6);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 16px;
-      overflow-y: auto;
-    }
-    .modal-card {
-      background: #ffffff;
-      border-radius: 14px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      margin: auto;
-      overflow: hidden;
-    }
-    .modal-md { max-width: 520px; }
-    .modal-lg { max-width: 680px; }
-    .modal-header {
-      padding: 18px 24px;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .modal-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #111827;
-      margin: 0;
-    }
-    .modal-close-btn {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: #9ca3af;
+      color: #64748b;
       cursor: pointer;
+      transition: all 0.12s ease;
     }
-    .modal-body {
-      padding: 24px;
+    .icon-action-btn:hover {
+      background: #f1f5f9;
+      color: #0f172a;
     }
-    .modal-grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 600px) {
-      .modal-grid-2 { grid-template-columns: 1fr; }
-    }
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      padding: 16px 24px;
-      background: #f9fafb;
-      border-top: 1px solid #e5e7eb;
+    .text-danger-hover:hover {
+      background: #fef2f2;
+      color: #dc2626;
     }
 
-    /* Profile view */
-    .profile-header-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding-bottom: 18px;
-      border-bottom: 1px solid #e5e7eb;
-      margin-bottom: 18px;
+    /* Empty & Loading state */
+    .empty-state-cell {
+      padding: 48px 16px !important;
+      text-align: center;
     }
-    .profile-avatar {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      color: white;
-      font-weight: 700;
-      font-size: 1.2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .profile-name {
-      margin: 0 0 2px 0;
-      font-size: 1.2rem;
-      color: #111827;
-    }
-    .profile-position {
-      color: #6b7280;
-      font-size: 0.9rem;
-      display: block;
-    }
-    .profile-details-grid {
+    .empty-state-inner {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      align-items: center;
+      gap: 4px;
     }
-    .detail-row {
+    .empty-title {
+      font-weight: 600;
+      color: #0f172a;
+      font-size: 0.95rem;
+    }
+    .empty-desc {
+      color: #64748b;
+      font-size: 0.82rem;
+    }
+    .mt-3 { margin-top: 12px; }
+    .loading-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e2e8f0;
+      border-top-color: #0f172a;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Modal System */
+    .modal-layer {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .modal-window {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-overlay);
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+    .modal-md { max-width: 480px; }
+    .modal-lg { max-width: 620px; }
+    .modal-top {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .modal-heading {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #0f172a;
+      margin: 0;
+    }
+    .modal-subheading {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin: 2px 0 0 0;
+    }
+    .modal-x-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+    }
+    .modal-x-btn:hover { color: #0f172a; }
+    .modal-scroll-body {
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .modal-bottom {
+      padding: 12px 20px;
+      background: #fafafa;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* Detail Modal Profile */
+    .profile-card-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 16px;
+    }
+    .profile-lg-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #0f172a;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .profile-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #0f172a;
+      margin: 0;
+    }
+    .profile-sub {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+    .mt-2 { margin-top: 6px; }
+    .profile-meta-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .meta-item {
       display: flex;
       justify-content: space-between;
-      font-size: 0.9rem;
-      padding-bottom: 8px;
-      border-bottom: 1px dashed #f3f4f6;
+      font-size: 0.82rem;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed #f1f5f9;
     }
-    .detail-label { color: #6b7280; }
-    .detail-value { color: #111827; }
-    .mt-1 { margin-top: 4px; }
-    .font-bold { font-weight: 700; }
+    .meta-label { color: #64748b; }
+    .meta-val { color: #0f172a; }
   `]
 })
 export class EmployeeListComponent implements OnInit, OnDestroy {
@@ -771,11 +941,9 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSubmitting = false;
 
-  // Search debounce
   private searchSubject = new Subject<string>();
   private searchSub?: Subscription;
 
-  // Modals
   isModalOpen = false;
   isEditing = false;
   editingId: number | null = null;
@@ -843,6 +1011,12 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     });
   }
 
+  getInitials(emp: Employee): string {
+    const f = emp.firstName ? emp.firstName.trim().charAt(0) : '';
+    const l = emp.lastName ? emp.lastName.trim().charAt(0) : '';
+    return (f + l).toUpperCase() || 'NV';
+  }
+
   onSearchChanged(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchSubject.next(input.value);
@@ -867,6 +1041,13 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     this.pagedRequest.minSalary = input.value ? parseFloat(input.value) : undefined;
     this.pagedRequest.pageNumber = 1;
     this.loadEmployees();
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(this.pagedRequest.searchTerm || 
+              this.pagedRequest.departmentId || 
+              this.pagedRequest.status || 
+              this.pagedRequest.minSalary);
   }
 
   resetFilters(): void {
@@ -960,7 +1141,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     if (this.isEditing && this.editingId) {
       this.empService.update(this.editingId, formVal).subscribe({
         next: () => {
-          this.toastService.success('Đã cập nhật hồ sơ nhân viên thành công.');
+          this.toastService.success('Đã cập nhật hồ sơ nhân sự thành công.');
           this.isSubmitting = false;
           this.closeModal();
           this.loadEmployees();
@@ -970,7 +1151,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     } else {
       this.empService.create(formVal).subscribe({
         next: () => {
-          this.toastService.success('Đã tạo mới nhân viên thành công.');
+          this.toastService.success('Đã tiếp nhận hồ sơ nhân sự mới.');
           this.isSubmitting = false;
           this.closeModal();
           this.loadEmployees();
@@ -989,7 +1170,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     if (!this.empToDelete) return;
     this.empService.delete(this.empToDelete.id).subscribe({
       next: () => {
-        this.toastService.success(`Đã xóa nhân viên "${this.empToDelete?.fullName}" thành công.`);
+        this.toastService.success(`Đã thu hồi hồ sơ nhân sự "${this.empToDelete?.fullName}".`);
         this.isDeleteModalOpen = false;
         this.empToDelete = null;
         this.loadEmployees();

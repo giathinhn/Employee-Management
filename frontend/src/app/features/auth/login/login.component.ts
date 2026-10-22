@@ -13,45 +13,47 @@ import { ToastService } from '../../../core/services/toast.service';
     <div class="auth-wrapper">
       <div class="auth-card">
         <div class="auth-header">
-          <div class="auth-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <div class="auth-brand-mark">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"></path><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"></path><path d="M10 6h4"></path><path d="M10 10h4"></path><path d="M10 14h4"></path><path d="M10 18h4"></path></svg>
           </div>
-          <h2 class="auth-title">Đăng Nhập Hệ Thống</h2>
-          <p class="auth-subtitle">Hệ thống Quản lý Nhân sự & Cơ cấu Phòng ban</p>
+          <h2 class="auth-title">Đăng Nhập Cổng Nội Bộ</h2>
+          <p class="auth-subtitle">Nhập tài khoản định danh để truy cập hệ thống quản trị</p>
         </div>
 
-        <!-- Quick Demo Account Fill -->
-        <div class="demo-box">
-          <span class="demo-title">Tài khoản dùng thử (1-click điền):</span>
-          <div class="demo-buttons">
-            <button type="button" class="btn-demo demo-admin" (click)="fillDemo('admin', 'Admin@123')">
-              Admin
+        <!-- Sleek Quick Access Pills -->
+        <div class="quick-access-box">
+          <span class="quick-access-title">Tài khoản kiểm thử nhanh:</span>
+          <div class="quick-pills">
+            <button type="button" class="access-pill" (click)="fillDemo('admin', 'Admin@123')">
+              <span class="pill-dot dot-admin"></span> Admin
             </button>
-            <button type="button" class="btn-demo demo-manager" (click)="fillDemo('manager', 'Manager@123')">
-              Manager
+            <button type="button" class="access-pill" (click)="fillDemo('manager', 'Manager@123')">
+              <span class="pill-dot dot-manager"></span> Manager
             </button>
-            <button type="button" class="btn-demo demo-employee" (click)="fillDemo('employee', 'Employee@123')">
-              Employee
+            <button type="button" class="access-pill" (click)="fillDemo('employee', 'Employee@123')">
+              <span class="pill-dot dot-employee"></span> Employee
             </button>
           </div>
         </div>
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-          <div class="form-group">
+          <div class="form-group mb-3">
             <label for="username" class="form-label required">Tên đăng nhập</label>
             <input id="username" 
                    type="text" 
                    class="form-control" 
                    formControlName="username" 
-                   placeholder="Nhập tên đăng nhập"
+                   placeholder="Tên tài khoản hoặc email"
                    [class.is-invalid]="f['username'].touched && f['username'].invalid">
             <div class="invalid-feedback" *ngIf="f['username'].touched && f['username'].invalid">
               Vui lòng nhập tên đăng nhập.
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="password" class="form-label required">Mật khẩu</label>
+          <div class="form-group mb-4">
+            <div class="label-row">
+              <label for="password" class="form-label required">Mật khẩu</label>
+            </div>
             <input id="password" 
                    type="password" 
                    class="form-control" 
@@ -63,20 +65,20 @@ import { ToastService } from '../../../core/services/toast.service';
             </div>
           </div>
 
-          <button type="submit" class="btn btn-primary w-100 btn-submit" [disabled]="loginForm.invalid || isSubmitting">
-            {{ isSubmitting ? 'Đang xác thực...' : 'Đăng Nhập' }}
+          <button type="submit" class="btn btn-primary w-100" [disabled]="loginForm.invalid || isSubmitting">
+            {{ isSubmitting ? 'Đang xác thực...' : 'Đăng nhập vào hệ thống' }}
           </button>
         </form>
 
         <div class="auth-footer">
-          Chưa có tài khoản? <a routerLink="/register">Đăng ký tài khoản mới</a>
+          Chưa có tài khoản? <a routerLink="/register">Đăng ký tài khoản</a>
         </div>
       </div>
     </div>
   `,
   styles: [`
     .auth-wrapper {
-      min-height: calc(100vh - 140px);
+      min-height: calc(100vh - 120px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -84,94 +86,107 @@ import { ToastService } from '../../../core/services/toast.service';
     }
     .auth-card {
       background: #ffffff;
-      border-radius: 16px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
       width: 100%;
-      max-width: 440px;
-      padding: 32px;
+      max-width: 400px;
+      padding: 32px 28px;
     }
     .auth-header {
       text-align: center;
       margin-bottom: 24px;
     }
-    .auth-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
-      background: #eff6ff;
-      color: #2563eb;
+    .auth-brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      background: #0f172a;
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 16px;
+      margin: 0 auto 14px;
     }
     .auth-title {
-      font-size: 1.45rem;
-      font-weight: 700;
-      color: #111827;
-      margin: 0 0 6px 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin: 0 0 4px 0;
     }
     .auth-subtitle {
-      font-size: 0.85rem;
-      color: #6b7280;
+      font-size: 0.8rem;
+      color: #64748b;
       margin: 0;
     }
-    .demo-box {
-      background: #f9fafb;
-      border: 1px dashed #d1d5db;
-      border-radius: 10px;
-      padding: 12px;
+    .quick-access-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
       margin-bottom: 20px;
-      text-align: center;
     }
-    .demo-title {
+    .quick-access-title {
       display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #4b5563;
-      margin-bottom: 8px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: #64748b;
+      margin-bottom: 6px;
     }
-    .demo-buttons {
+    .quick-pills {
       display: flex;
+      gap: 6px;
+    }
+    .access-pill {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
       justify-content: center;
-      gap: 8px;
-    }
-    .btn-demo {
-      border: 1px solid;
+      gap: 5px;
+      padding: 5px 8px;
+      border: 1px solid #e2e8f0;
       background: #ffffff;
+      border-radius: 4px;
       font-size: 0.75rem;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 6px;
+      font-weight: 500;
+      color: #334155;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.12s ease;
     }
-    .demo-admin { border-color: #fca5a5; color: #dc2626; }
-    .demo-admin:hover { background: #fee2e2; }
-    .demo-manager { border-color: #fde68a; color: #d97706; }
-    .demo-manager:hover { background: #fef3c7; }
-    .demo-employee { border-color: #a7f3d0; color: #059669; }
-    .demo-employee:hover { background: #d1fae5; }
+    .access-pill:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0f172a;
+    }
+    .pill-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+    .dot-admin { background: #ef4444; }
+    .dot-manager { background: #f59e0b; }
+    .dot-employee { background: #10b981; }
 
-    .btn-submit {
-      margin-top: 10px;
-      padding: 12px;
-      font-size: 0.95rem;
-      font-weight: 600;
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+    .mb-3 { margin-bottom: 14px; }
+    .mb-4 { margin-bottom: 18px; }
+
     .auth-footer {
       margin-top: 24px;
       text-align: center;
-      font-size: 0.85rem;
-      color: #6b7280;
+      font-size: 0.8rem;
+      color: #64748b;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 16px;
     }
     .auth-footer a {
-      color: #2563eb;
+      color: #0f172a;
       font-weight: 600;
-      text-decoration: none;
-    }
-    .auth-footer a:hover {
       text-decoration: underline;
     }
   `]
@@ -209,7 +224,7 @@ export class LoginComponent {
     this.isSubmitting = true;
     this.authService.login(this.loginForm.value).subscribe({
       next: res => {
-        this.toastService.success(`Chào mừng trở lại, ${res.username}! (Quyền: ${res.role})`);
+        this.toastService.success(`Chào mừng trở lại, ${res.username} (${res.role}).`);
         this.isSubmitting = false;
         this.router.navigate(['/']);
       },

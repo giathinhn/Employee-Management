@@ -12,136 +12,164 @@ import { Department } from '../../core/models/department.model';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="page-container">
-      <div class="page-header">
+    <div class="view-wrapper">
+      <!-- Breadcrumb & Page Header -->
+      <div class="view-header">
         <div>
-          <h1 class="page-title">Bảng điều khiển tổng quan</h1>
-          <p class="page-subtitle">Hệ thống theo dõi nhân sự, cơ cấu phòng ban và trạng thái làm việc</p>
+          <div class="view-breadcrumb">
+            <span>Tổ chức</span>
+            <span class="sep">/</span>
+            <span class="current">Báo cáo & Tổng quan</span>
+          </div>
+          <h1 class="view-title">Tổng Quan Nguồn Nhân Lực</h1>
+          <p class="view-desc">Số liệu tổng hợp về quy mô nhân sự, phân bổ phòng ban và tình trạng làm việc</p>
         </div>
-        <div class="header-actions" *ngIf="authService.isManager">
-          <a routerLink="/employees" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
-            Quản lý Nhân viên
+
+        <div class="view-actions" *ngIf="authService.isManager">
+          <a routerLink="/employees" class="btn btn-secondary btn-sm">
+            Tra cứu nhân sự
+          </a>
+          <a routerLink="/employees" class="btn btn-primary btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Thêm nhân viên
           </a>
         </div>
       </div>
 
-      <!-- Stats Cards -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon bg-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      <!-- KPI Summary Cards -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <span class="metric-label">Tổng số nhân sự</span>
+          <div class="metric-main">
+            <span class="metric-number">{{ stats?.totalEmployees ?? '—' }}</span>
+            <span class="metric-tag">Chính thức</span>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">Tổng số Nhân viên</span>
-            <div class="stat-value">{{ stats?.totalEmployees ?? '...' }}</div>
-          </div>
+          <span class="metric-sub">Phân bổ trên {{ stats?.totalDepartments ?? 0 }} đơn vị phòng ban</span>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon bg-green">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <div class="metric-card">
+          <span class="metric-label">Đang làm việc (Active)</span>
+          <div class="metric-main">
+            <span class="metric-number text-success">{{ stats?.activeEmployees ?? '—' }}</span>
+            <span class="metric-tag tag-success">
+              {{ getActiveRate() }}%
+            </span>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">Đang làm việc (Active)</span>
-            <div class="stat-value text-green">{{ stats?.activeEmployees ?? '...' }}</div>
-          </div>
+          <span class="metric-sub">Tỷ lệ hiện diện thực tế tại cơ quan</span>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon bg-amber">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <div class="metric-card">
+          <span class="metric-label">Nghỉ phép / Nghỉ chế độ</span>
+          <div class="metric-main">
+            <span class="metric-number text-warning">{{ stats?.onLeaveEmployees ?? '—' }}</span>
+            <span class="metric-tag tag-warning">Tạm vắng</span>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">Nghỉ phép (On Leave)</span>
-            <div class="stat-value text-amber">{{ stats?.onLeaveEmployees ?? '...' }}</div>
-          </div>
+          <span class="metric-sub">Nhân sự đang bảo lưu chế độ phép</span>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon bg-red">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <div class="metric-card">
+          <span class="metric-label">Đã thôi việc (Terminated)</span>
+          <div class="metric-main">
+            <span class="metric-number text-muted">{{ stats?.terminatedEmployees ?? '—' }}</span>
+            <span class="metric-tag tag-muted">Lưu trữ</span>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">Đã thôi việc (Terminated)</span>
-            <div class="stat-value text-red">{{ stats?.terminatedEmployees ?? '...' }}</div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon bg-purple">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-          </div>
-          <div class="stat-content">
-            <span class="stat-label">Số Phòng ban</span>
-            <div class="stat-value">{{ stats?.totalDepartments ?? '...' }}</div>
-          </div>
+          <span class="metric-sub">Hồ sơ đã hoàn tất thủ tục bàn giao</span>
         </div>
       </div>
 
-      <!-- Quick links and Departments Grid -->
-      <div class="dashboard-grid">
-        <div class="content-card">
+      <!-- Content Split Grid -->
+      <div class="main-grid">
+        <!-- Left: Department Headcount Breakdown -->
+        <div class="card-section">
           <div class="card-header">
-            <h2 class="card-title">Cơ cấu Phòng ban</h2>
-            <a routerLink="/departments" class="btn btn-outline-primary btn-sm">Xem tất cả</a>
-          </div>
-          <div class="card-body">
-            <div class="dept-list" *ngIf="departments.length > 0; else noDepts">
-              <div class="dept-item" *ngFor="let dept of departments">
-                <div class="dept-info">
-                  <span class="dept-code">{{ dept.code }}</span>
-                  <div>
-                    <h4 class="dept-name">{{ dept.name }}</h4>
-                    <span class="dept-loc">{{ dept.location || 'Chưa cập nhật vị trí' }}</span>
-                  </div>
-                </div>
-                <div class="dept-badge">
-                  <strong>{{ dept.employeeCount }}</strong> nhân sự
-                </div>
-              </div>
+            <div>
+              <h2 class="card-title">Cơ cấu & Quy mô phòng ban</h2>
+              <p class="card-subtitle">Thống kê số lượng nhân sự trực thuộc các đơn vị</p>
             </div>
+            <a routerLink="/departments" class="btn btn-secondary btn-sm">Xem tất cả</a>
+          </div>
+
+          <div class="card-body">
+            <div class="dept-table-wrapper" *ngIf="departments.length > 0; else noDepts">
+              <table class="dept-summary-table">
+                <thead>
+                  <tr>
+                    <th>Mã</th>
+                    <th>Tên phòng ban</th>
+                    <th>Vị trí văn phòng</th>
+                    <th style="text-align: right;">Nhân sự</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let dept of departments">
+                    <td>
+                      <span class="dept-code-tag">{{ dept.code }}</span>
+                    </td>
+                    <td>
+                      <strong class="dept-name-text">{{ dept.name }}</strong>
+                    </td>
+                    <td>
+                      <span class="text-muted text-sm">{{ dept.location || 'Chưa cập nhật' }}</span>
+                    </td>
+                    <td style="text-align: right;">
+                      <div class="headcount-badge">
+                        <span>{{ dept.employeeCount }}</span>
+                        <span class="headcount-unit">người</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
             <ng-template #noDepts>
-              <div class="empty-placeholder">Đang tải dữ liệu phòng ban...</div>
+              <div class="loading-box">Đang tải dữ liệu phòng ban...</div>
             </ng-template>
           </div>
         </div>
 
-        <div class="content-card">
+        <!-- Right: Governance & Quick Actions -->
+        <div class="card-section">
           <div class="card-header">
-            <h2 class="card-title">Thông tin hệ thống & Quyền hạn</h2>
+            <div>
+              <h2 class="card-title">Quyền hạn & Quản trị</h2>
+              <p class="card-subtitle">Phân quyền theo vai trò trong hệ thống</p>
+            </div>
           </div>
+
           <div class="card-body">
-            <div class="info-list">
-              <div class="info-row">
-                <span class="info-key">Kiến trúc công nghệ:</span>
-                <span class="info-val">Angular 18 + ASP.NET Core 8 Web API + PostgreSQL</span>
+            <div class="gov-card">
+              <div class="role-item">
+                <div class="role-badge-pill role-admin">ADMIN</div>
+                <div class="role-desc">
+                  <strong>Toàn quyền quản trị</strong>
+                  <p>Thêm, sửa, xóa nhân viên và phòng ban, quản lý toàn bộ hệ thống.</p>
+                </div>
               </div>
-              <div class="info-row">
-                <span class="info-key">Trạng thái đăng nhập:</span>
-                <span class="info-val" *ngIf="authService.currentUser$ | async as u; else notLogin">
-                  Đã đăng nhập với quyền <strong>{{ u.role }}</strong> ({{ u.username }})
-                </span>
-                <ng-template #notLogin>
-                  <span class="info-val text-amber">Chưa đăng nhập (Khách xem)</span>
-                </ng-template>
+
+              <div class="role-item">
+                <div class="role-badge-pill role-manager">MANAGER</div>
+                <div class="role-desc">
+                  <strong>Quản lý nghiệp vụ</strong>
+                  <p>Tạo mới và cập nhật thông tin nhân viên, điều chỉnh cơ cấu phòng ban.</p>
+                </div>
               </div>
-              <div class="info-row">
-                <span class="info-key">Phân quyền chức năng:</span>
-                <span class="info-val">
-                  • <strong>Admin</strong>: Toàn quyền CRUD nhân viên, phòng ban, phân quyền.<br>
-                  • <strong>Manager</strong>: Thêm mới, chỉnh sửa nhân viên & phòng ban.<br>
-                  • <strong>Employee / Khách</strong>: Xem danh sách, tìm kiếm, lọc, phân trang.
-                </span>
+
+              <div class="role-item">
+                <div class="role-badge-pill role-employee">EMPLOYEE</div>
+                <div class="role-desc">
+                  <strong>Xem và tra cứu</strong>
+                  <p>Tìm kiếm, lọc danh bạ nhân sự nội bộ và xem thông tin chi tiết.</p>
+                </div>
               </div>
             </div>
 
-            <div class="banner-box">
-              <h4>Bắt đầu thao tác nhanh:</h4>
-              <div class="btn-group-wrap">
-                <a routerLink="/employees" class="btn btn-primary btn-sm">Danh sách Nhân viên</a>
-                <a routerLink="/departments" class="btn btn-outline-secondary btn-sm">Danh sách Phòng ban</a>
-                <a *ngIf="!authService.isAuthenticated" routerLink="/login" class="btn btn-outline-primary btn-sm">Đăng nhập Quản trị</a>
+            <div class="quick-links-panel">
+              <span class="quick-label">Lối tắt thao tác:</span>
+              <div class="quick-buttons">
+                <a routerLink="/employees" class="btn btn-secondary btn-sm">Danh bạ nhân viên</a>
+                <a routerLink="/departments" class="btn btn-secondary btn-sm">Cơ cấu phòng ban</a>
+                <a *ngIf="!authService.isAuthenticated" routerLink="/login" class="btn btn-primary btn-sm">Đăng nhập tài khoản</a>
               </div>
             </div>
           </div>
@@ -150,195 +178,262 @@ import { Department } from '../../core/models/department.model';
     </div>
   `,
   styles: [`
-    .page-container {
-      max-width: 1280px;
+    .view-wrapper {
+      max-width: 1320px;
       margin: 0 auto;
-      padding: 32px 24px;
+      padding: 28px 24px 48px;
     }
-    .page-header {
+    .view-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 28px;
+      align-items: flex-end;
+      margin-bottom: 24px;
       flex-wrap: wrap;
       gap: 16px;
     }
-    .page-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #111827;
-      margin: 0 0 6px 0;
-      letter-spacing: -0.02em;
+    .view-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-bottom: 6px;
     }
-    .page-subtitle {
-      color: #6b7280;
-      font-size: 0.95rem;
+    .view-breadcrumb .sep {
+      color: #cbd5e1;
+    }
+    .view-breadcrumb .current {
+      color: #0f172a;
+      font-weight: 500;
+    }
+    .view-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.025em;
+      margin: 0 0 4px 0;
+    }
+    .view-desc {
+      color: #64748b;
+      font-size: 0.85rem;
       margin: 0;
     }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-      margin-bottom: 32px;
-    }
-    .stat-card {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 20px;
+    .view-actions {
       display: flex;
       align-items: center;
+      gap: 8px;
+    }
+
+    /* Metric cards */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 16px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      transition: transform 0.2s, box-shadow 0.2s;
+      margin-bottom: 24px;
     }
-    .stat-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    }
-    .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .bg-blue { background: #eff6ff; color: #2563eb; }
-    .bg-green { background: #ecfdf5; color: #059669; }
-    .bg-amber { background: #fffbeb; color: #d97706; }
-    .bg-red { background: #fef2f2; color: #dc2626; }
-    .bg-purple { background: #f5f3ff; color: #7c3aed; }
-
-    .stat-content {
-      display: flex;
-      flex-direction: column;
-    }
-    .stat-label {
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: #6b7280;
-      margin-bottom: 4px;
-    }
-    .stat-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #111827;
-      line-height: 1;
-    }
-    .text-green { color: #059669; }
-    .text-amber { color: #d97706; }
-    .text-red { color: #dc2626; }
-
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 24px;
-    }
-    .content-card {
+    .metric-card {
       background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    }
+    .metric-label {
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: #64748b;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .metric-main {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .metric-number {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #0f172a;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em;
+    }
+    .metric-tag {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .tag-success { background: #ecfdf5; color: #047857; }
+    .tag-warning { background: #fffbeb; color: #b45309; }
+    .tag-muted { background: #f1f5f9; color: #64748b; }
+    .text-success { color: #047857; }
+    .text-warning { color: #b45309; }
+    .text-muted { color: #64748b; }
+    .metric-sub {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      display: block;
+    }
+
+    /* Split Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+    .card-section {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
       overflow: hidden;
     }
     .card-header {
-      padding: 18px 24px;
-      border-bottom: 1px solid #e5e7eb;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
     .card-title {
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       font-weight: 600;
-      color: #111827;
+      color: #0f172a;
       margin: 0;
     }
-    .card-body {
-      padding: 24px;
-    }
-    .dept-list {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .dept-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      background: #f9fafb;
-      border-radius: 8px;
-      border: 1px solid #f3f4f6;
-    }
-    .dept-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .dept-code {
-      background: #e0e7ff;
-      color: #4338ca;
+    .card-subtitle {
       font-size: 0.75rem;
-      font-weight: 700;
-      padding: 4px 8px;
-      border-radius: 6px;
+      color: #64748b;
+      margin: 2px 0 0 0;
     }
-    .dept-name {
-      font-size: 0.95rem;
+    .card-body {
+      padding: 16px 20px;
+    }
+
+    /* Clean dept summary table */
+    .dept-summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+    .dept-summary-table th {
+      text-align: left;
+      font-size: 0.72rem;
       font-weight: 600;
-      color: #1f2937;
-      margin: 0 0 2px 0;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 8px 12px;
+      border-bottom: 1px solid #f1f5f9;
     }
-    .dept-loc {
-      font-size: 0.8rem;
-      color: #6b7280;
+    .dept-summary-table td {
+      padding: 12px;
+      border-bottom: 1px solid #f8fafc;
+      color: #334155;
     }
-    .dept-badge {
-      font-size: 0.85rem;
-      color: #4b5563;
+    .dept-summary-table tr:last-child td {
+      border-bottom: none;
     }
-    .dept-badge strong {
-      color: #111827;
+    .dept-code-tag {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
     }
-    .info-list {
+    .dept-name-text {
+      color: #0f172a;
+      font-weight: 500;
+    }
+    .text-sm {
+      font-size: 0.78rem;
+    }
+    .headcount-badge {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 3px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .headcount-unit {
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: #64748b;
+    }
+
+    /* Governance panel */
+    .gov-card {
       display: flex;
       flex-direction: column;
       gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
-    .info-row {
+    .role-item {
       display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 0.9rem;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-radius: var(--radius-sm);
+      border: 1px solid #f1f5f9;
     }
-    .info-key {
+    .role-badge-pill {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .role-admin { background: #fef2f2; color: #b91c1c; }
+    .role-manager { background: #fffbeb; color: #b45309; }
+    .role-employee { background: #f0fdf4; color: #15803d; }
+    .role-desc strong {
+      display: block;
+      font-size: 0.82rem;
       font-weight: 600;
-      color: #374151;
+      color: #0f172a;
+      margin-bottom: 1px;
     }
-    .info-val {
-      color: #4b5563;
-      line-height: 1.5;
+    .role-desc p {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin: 0;
+      line-height: 1.35;
     }
-    .banner-box {
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      border-radius: 10px;
-      padding: 16px;
+    .quick-links-panel {
+      padding-top: 16px;
+      border-top: 1px solid #f1f5f9;
     }
-    .banner-box h4 {
-      margin: 0 0 12px 0;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #166534;
+    .quick-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #64748b;
+      display: block;
+      margin-bottom: 8px;
     }
-    .btn-group-wrap {
+    .quick-buttons {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+    }
+    .loading-box {
+      text-align: center;
+      padding: 32px;
+      color: #94a3b8;
+      font-size: 0.85rem;
     }
   `]
 })
@@ -364,5 +459,10 @@ export class DashboardComponent implements OnInit {
       next: res => this.departments = res.slice(0, 5),
       error: () => {}
     });
+  }
+
+  getActiveRate(): number {
+    if (!this.stats || this.stats.totalEmployees === 0) return 0;
+    return Math.round((this.stats.activeEmployees / this.stats.totalEmployees) * 100);
   }
 }
