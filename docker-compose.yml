@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: employee_management_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: employee_management_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d employee_management_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - employee_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: employee_management_api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=employee_management_db;Username=postgres;Password=postgres
+      - Jwt__Key=EmployeeManagementSuperSecretKey2026!SecureKeyForJwtTokenGeneration
+      - Jwt__Issuer=EmployeeManagementAPI
+      - Jwt__Audience=EmployeeManagementClient
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - employee_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: employee_management_frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - employee_net
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  employee_net:
+    driver: bridge
