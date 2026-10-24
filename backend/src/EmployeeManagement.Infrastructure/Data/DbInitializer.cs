@@ -288,5 +288,100 @@ public static class DbInitializer
             await context.Employees.AddRangeAsync(employees);
             await context.SaveChangesAsync();
         }
+        // Seed Attendance
+        if (!await context.Attendances.AnyAsync())
+        {
+            var activeEmployees = await context.Employees
+                .Where(e => e.Status == EmployeeStatus.Active)
+                .Take(8)
+                .ToListAsync();
+
+            var today = DateTime.UtcNow.Date;
+            var attendances = new List<Attendance>();
+
+            for (int daysAgo = 3; daysAgo >= 0; daysAgo--)
+            {
+                var recordDate = DateTime.SpecifyKind(today.AddDays(-daysAgo), DateTimeKind.Utc);
+                if (recordDate.DayOfWeek == DayOfWeek.Saturday || recordDate.DayOfWeek == DayOfWeek.Sunday)
+                    continue;
+
+                int empIndex = 0;
+                foreach (var emp in activeEmployees)
+                {
+                    empIndex++;
+                    if (daysAgo == 0)
+                    {
+                        if (empIndex == 1)
+                        {
+                            attendances.Add(new Attendance
+                            {
+                                EmployeeId = emp.Id,
+                                Date = recordDate,
+                                CheckInTime = DateTime.SpecifyKind(recordDate.AddHours(8).AddMinutes(15), DateTimeKind.Utc),
+                                CheckOutTime = DateTime.SpecifyKind(recordDate.AddHours(17).AddMinutes(30), DateTimeKind.Utc),
+                                WorkingHours = 8.25m,
+                                Status = AttendanceStatus.Present,
+                                Notes = "Ðã hoàn thành ca làm vi?c",
+                                CreatedAt = DateTime.UtcNow
+                            });
+                        }
+                        else if (empIndex == 2)
+                        {
+                            attendances.Add(new Attendance
+                            {
+                                EmployeeId = emp.Id,
+                                Date = recordDate,
+                                CheckInTime = DateTime.SpecifyKind(recordDate.AddHours(8).AddMinutes(20), DateTimeKind.Utc),
+                                CheckOutTime = null,
+                                WorkingHours = null,
+                                Status = AttendanceStatus.Present,
+                                Notes = "Ðang làm vi?c t?i van phòng",
+                                CreatedAt = DateTime.UtcNow
+                            });
+                        }
+                        else if (empIndex == 3)
+                        {
+                            attendances.Add(new Attendance
+                            {
+                                EmployeeId = emp.Id,
+                                Date = recordDate,
+                                CheckInTime = DateTime.SpecifyKind(recordDate.AddHours(8).AddMinutes(45), DateTimeKind.Utc),
+                                CheckOutTime = null,
+                                WorkingHours = null,
+                                Status = AttendanceStatus.Late,
+                                Notes = "T?c du?ng do?n ngã tu",
+                                CreatedAt = DateTime.UtcNow
+                            });
+                        }
+                    }
+                    else
+                    {
+                        var isLate = empIndex % 4 == 0;
+                        var isEarly = empIndex % 5 == 0;
+                        var status = isLate ? AttendanceStatus.Late : (isEarly ? AttendanceStatus.EarlyLeave : AttendanceStatus.Present);
+                        var checkInMin = isLate ? 45 : 15;
+                        var checkOutHour = isEarly ? 16 : 17;
+
+                        attendances.Add(new Attendance
+                        {
+                            EmployeeId = emp.Id,
+                            Date = recordDate,
+                            CheckInTime = DateTime.SpecifyKind(recordDate.AddHours(8).AddMinutes(checkInMin), DateTimeKind.Utc),
+                            CheckOutTime = DateTime.SpecifyKind(recordDate.AddHours(checkOutHour).AddMinutes(30), DateTimeKind.Utc),
+                            WorkingHours = isEarly ? 7.25m : 8.25m,
+                            Status = status,
+                            Notes = isLate ? "Ði mu?n có thông báo tru?c" : (isEarly ? "Xin v? s?m gi?i quy?t vi?c gia dình" : null),
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+
+            if (attendances.Count > 0)
+            {
+                await context.Attendances.AddRangeAsync(attendances);
+                await context.SaveChangesAsync();
+            }
+        }
     }
 }

@@ -19,6 +19,8 @@ public class Employee
     public int DepartmentId { get; set; }
     public Department? Department { get; set; }
 
+    public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 }

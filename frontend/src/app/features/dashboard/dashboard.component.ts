@@ -25,7 +25,11 @@ import { Department } from '../../core/models/department.model';
           <p class="view-desc">Số liệu tổng hợp về quy mô nhân sự, phân bổ phòng ban và tình trạng làm việc</p>
         </div>
 
-        <div class="view-actions" *ngIf="authService.isManager">
+        <div class="view-actions">
+          <a routerLink="/attendance" class="btn btn-secondary btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Chấm công vào / ra
+          </a>
           <a routerLink="/employees" class="btn btn-secondary btn-sm">
             Tra cứu nhân sự
           </a>

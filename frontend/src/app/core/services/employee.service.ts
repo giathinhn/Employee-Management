@@ -44,6 +44,10 @@ export class EmployeeService {
     return this.http.get<Employee>(`${this.apiUrl}/${id}`);
   }
 
+  getAll(): Observable<PagedResult<Employee>> {
+    return this.getPaged({ pageNumber: 1, pageSize: 100 });
+  }
+
   getStatistics(): Observable<EmployeeStatistics> {
     return this.http.get<EmployeeStatistics>(`${this.apiUrl}/statistics`);
   }

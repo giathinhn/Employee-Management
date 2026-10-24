@@ -68,7 +68,27 @@ graph TD
 - **Thống kê nhân sự**: Hiển thị số lượng nhân sự thuộc từng phòng ban theo thời gian thực.
 - **Bảo toàn dữ liệu (Data Integrity)**: Ngăn chặn xóa phòng ban nếu phòng ban đó vẫn đang còn nhân viên công tác kèm thông báo hướng dẫn điều chuyển.
 
-### 3. Bảo Mật & Phân Quyền (JWT & RBAC)
+### 3. Quản lý Chấm Công & Điểm Danh (Attendance & Time Tracking)
+- **Chấm công 1 chạm (Quick Check-In / Check-Out)**:
+  - Tích hợp **đồng hồ thời gian thực (Live Digital Clock)** hiển thị chính xác theo từng giây và ngày tháng hiện tại.
+  - Nút **Chấm công vào (Check-In)** và **Chấm công ra (Check-Out)** tự động phát hiện trạng thái ca làm việc trong ngày.
+  - Tự động nhận diện đi muộn (sau 08:30) hoặc về sớm (trước 17:00), tự động tính lũy kế số giờ làm việc thực tế.
+  - Hỗ trợ thêm ghi chú chấm công (lý do đi muộn, làm việc từ xa WFH, đi gặp đối tác...).
+- **Báo cáo & Thống kê chuyên cần (KPI Summary)**:
+  - Thống kê tổng lượt chấm công trong tháng.
+  - Tỷ lệ chuyên cần (On-time Rate %).
+  - Tổng số lượt đi muộn & về sớm để cảnh báo vi phạm kỷ luật lao động.
+  - Tổng số giờ công tích lũy và số giờ trung bình/lượt.
+- **Bộ lọc & Tra cứu đa năng**:
+  - Tìm kiếm theo họ tên nhân viên, chức danh, email, phòng ban.
+  - Lọc theo phòng ban và trạng thái (Đúng giờ, Đi muộn, Về sớm, Đi muộn & Về sớm, Vắng mặt, Nghỉ phép).
+  - Chọn nhanh khoảng thời gian: Hôm nay, 7 ngày qua, Tháng này hoặc tùy chỉnh ngày.
+- **Chấm công bổ sung & Điều chỉnh công (Dành cho Quản trị & Quản lý)**:
+  - Quản lý có thể tạo phiếu chấm công bù cho nhân viên quên quẹt thẻ.
+  - Cho phép điều chỉnh giờ vào, giờ ra, số giờ công và giải trình lý do.
+  - Toàn bộ 24 Unit Tests tự động bao phủ logic chấm công, tính giờ và bảo toàn dữ liệu.
+
+### 4. Bảo Mật & Phân Quyền (JWT & RBAC)
 Hệ thống tích hợp JWT Bearer Token với 3 cấp quyền hạn:
 - **Admin**: Toàn quyền xóa nhân viên, xóa phòng ban, thêm/sửa tất cả dữ liệu.
 - **Manager**: Quyền tạo mới và cập nhật thông tin nhân viên, phòng ban.
@@ -129,7 +149,7 @@ Truy cập giao diện tại [http://localhost:4200](http://localhost:4200).
 
 Bộ kiểm thử unit test toàn diện cho các tầng logic nghiệp vụ, bảo mật, mã hóa mật khẩu, kiểm tra trùng lặp và phân trang:
 ```bash
-# Chạy toàn bộ 15 Unit Tests backend
+# Chạy toàn bộ 24 Unit Tests backend
 dotnet test backend/EmployeeManagement.sln
 
 # Kiểm tra build production của Frontend

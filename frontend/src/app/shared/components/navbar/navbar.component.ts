@@ -32,6 +32,9 @@ import { AuthService } from '../../../core/services/auth.service';
             <a routerLink="/employees" routerLinkActive="active" class="nav-tab">
               Nhân sự
             </a>
+            <a routerLink="/attendance" routerLinkActive="active" class="nav-tab">
+              Chấm công
+            </a>
             <a routerLink="/departments" routerLinkActive="active" class="nav-tab">
               Phòng ban
             </a>

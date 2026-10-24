@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<Attendance> Attendances => Set<Attendance>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,6 +54,20 @@ public class AppDbContext : DbContext
             entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
             entity.Property(u => u.Email).IsRequired().HasMaxLength(100);
             entity.Property(u => u.Role).IsRequired().HasMaxLength(30);
+        });
+
+        // Attendance configuration
+        modelBuilder.Entity<Attendance>(entity =>
+        {
+            entity.HasKey(a => a.Id);
+            entity.HasIndex(a => new { a.EmployeeId, a.Date }).IsUnique();
+            entity.Property(a => a.WorkingHours).HasPrecision(5, 2);
+            entity.Property(a => a.Notes).HasMaxLength(500);
+
+            entity.HasOne(a => a.Employee)
+                .WithMany(e => e.Attendances)
+                .HasForeignKey(a => a.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
