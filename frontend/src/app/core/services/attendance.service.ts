@@ -97,4 +97,36 @@ export class AttendanceService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  exportExcel(request: AttendancePagedRequest): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (request.searchTerm && request.searchTerm.trim()) {
+      params = params.set('searchTerm', request.searchTerm.trim());
+    }
+    if (request.departmentId) {
+      params = params.set('departmentId', request.departmentId.toString());
+    }
+    if (request.employeeId) {
+      params = params.set('employeeId', request.employeeId.toString());
+    }
+    if (request.status) {
+      params = params.set('status', request.status.toString());
+    }
+    if (request.startDate) {
+      params = params.set('startDate', request.startDate);
+    }
+    if (request.endDate) {
+      params = params.set('endDate', request.endDate);
+    }
+    if (request.sortBy) {
+      params = params.set('sortBy', request.sortBy);
+      params = params.set('sortDescending', (!!request.sortDescending).toString());
+    }
+
+    return this.http.get(`${this.apiUrl}/export-excel`, {
+      params,
+      responseType: 'blob'
+    });
+  }
 }

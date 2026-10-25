@@ -44,12 +44,16 @@ export function minimumAgeValidator(minAge: number) {
           <p class="view-desc">Quản lý danh sách nhân viên, thông tin hợp đồng và phân công bộ phận</p>
         </div>
 
-        <div class="view-actions" *ngIf="authService.isManager">
+        <div class="view-actions">
+          <button class="btn btn-secondary btn-sm" (click)="exportToExcel()" [disabled]="isExporting" title="Xuất danh sách nhân sự ra file Excel">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>
+            {{ isExporting ? 'Đang xuất...' : 'Xuất Excel' }}
+          </button>
           <button class="btn btn-secondary btn-sm" (click)="loadEmployees()" title="Làm mới danh sách">
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>
             Làm mới
           </button>
-          <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
+          <button class="btn btn-primary btn-sm" *ngIf="authService.isManager" (click)="openCreateModal()">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Thêm nhân viên mới
           </button>
@@ -925,6 +929,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   private deptService = inject(DepartmentService);
   private toastService = inject(ToastService);
   authService = inject(AuthService);
+  isExporting = false;
 
   EmployeeStatus = EmployeeStatus;
 
@@ -997,6 +1002,38 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     this.deptService.getAll().subscribe({
       next: res => this.departments = res,
       error: () => {}
+    });
+  }
+
+  exportToExcel(): void {
+    this.isExporting = true;
+    this.toastService.info("Đang chuẩn bị dữ liệu xuất Excel...");
+    this.empService.exportExcel(this.pagedRequest).subscribe({
+      next: (blob: Blob) => {
+        this.isExporting = false;
+        const now = new Date();
+        const timestamp = now.getFullYear() +
+          String(now.getMonth() + 1).padStart(2, "0") +
+          String(now.getDate()).padStart(2, "0") + "_" +
+          String(now.getHours()).padStart(2, "0") +
+          String(now.getMinutes()).padStart(2, "0");
+        const fileName = `Danh_Sach_Nhan_Vien_${timestamp}.xlsx`;
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        this.toastService.success("Xuất file Excel danh sách nhân viên thành công!");
+      },
+      error: () => {
+        this.isExporting = false;
+        this.toastService.error("Có lỗi xảy ra khi xuất file Excel.");
+      }
     });
   }
 

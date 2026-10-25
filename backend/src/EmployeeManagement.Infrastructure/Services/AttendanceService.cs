@@ -12,10 +12,12 @@ namespace EmployeeManagement.Infrastructure.Services;
 public class AttendanceService : IAttendanceService
 {
     private readonly AppDbContext _context;
+    private readonly IExcelExportService _excelExportService;
 
-    public AttendanceService(AppDbContext context)
+    public AttendanceService(AppDbContext context, IExcelExportService? excelExportService = null)
     {
         _context = context;
+        _excelExportService = excelExportService ?? new ExcelExportService();
     }
 
     public async Task<PagedResult<AttendanceDto>> GetPagedAsync(AttendancePagedRequest request)
@@ -473,4 +475,64 @@ public class AttendanceService : IAttendanceService
         AttendanceStatus.OnLeave => "Nghỉ phép",
         _ => "Không xác định"
     };
+
+    public async Task<byte[]> ExportToExcelAsync(AttendancePagedRequest request)
+    {
+        var query = _context.Attendances
+            .Include(a => a.Employee)
+                .ThenInclude(e => e!.Department)
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            var term = request.SearchTerm.Trim().ToLower();
+            query = query.Where(a =>
+                (a.Employee != null && (
+                    a.Employee.FirstName.ToLower().Contains(term) ||
+                    a.Employee.LastName.ToLower().Contains(term) ||
+                    (a.Employee.FirstName + " " + a.Employee.LastName).ToLower().Contains(term) ||
+                    a.Employee.Email.ToLower().Contains(term) ||
+                    a.Employee.Position.ToLower().Contains(term) ||
+                    (a.Employee.Department != null && a.Employee.Department.Name.ToLower().Contains(term))
+                )) ||
+                (a.Notes != null && a.Notes.ToLower().Contains(term)));
+        }
+
+        if (request.DepartmentId.HasValue && request.DepartmentId.Value > 0)
+        {
+            query = query.Where(a => a.Employee != null && a.Employee.DepartmentId == request.DepartmentId.Value);
+        }
+
+        if (request.EmployeeId.HasValue && request.EmployeeId.Value > 0)
+        {
+            query = query.Where(a => a.EmployeeId == request.EmployeeId.Value);
+        }
+
+        if (request.Status.HasValue)
+        {
+            query = query.Where(a => a.Status == request.Status.Value);
+        }
+
+        if (request.StartDate.HasValue)
+        {
+            var startUtc = DateTime.SpecifyKind(request.StartDate.Value.Date, DateTimeKind.Utc);
+            query = query.Where(a => a.Date >= startUtc);
+        }
+
+        if (request.EndDate.HasValue)
+        {
+            var endUtc = DateTime.SpecifyKind(request.EndDate.Value.Date, DateTimeKind.Utc);
+            query = query.Where(a => a.Date <= endUtc);
+        }
+
+        query = ApplySorting(query, request.SortBy, request.SortDescending);
+
+        var attendances = await query
+            .Select(a => MapToDto(a))
+            .ToListAsync();
+
+        var stats = await GetStatisticsAsync(null, null, request.DepartmentId);
+
+        return _excelExportService.ExportAttendanceToExcel(attendances, stats);
+    }
 }

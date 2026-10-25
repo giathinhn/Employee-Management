@@ -12,11 +12,15 @@ namespace EmployeeManagement.Infrastructure.Services;
 public class EmployeeService : IEmployeeService
 {
     private readonly AppDbContext _context;
-
-    public EmployeeService(AppDbContext context)
+    private readonly IExcelExportService _excelExportService;
+    public EmployeeService(AppDbContext context, IExcelExportService? excelExportService = null)
     {
         _context = context;
+        _excelExportService = excelExportService ?? new ExcelExportService();
     }
+
+
+
 
     public async Task<PagedResult<EmployeeDto>> GetPagedAsync(PagedRequest request)
     {
@@ -250,5 +254,52 @@ public class EmployeeService : IEmployeeService
             CreatedAt = e.CreatedAt,
             UpdatedAt = e.UpdatedAt
         };
+    }
+
+    public async Task<byte[]> ExportToExcelAsync(PagedRequest request)
+    {
+        var query = _context.Employees
+            .Include(e => e.Department)
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            var term = request.SearchTerm.Trim().ToLower();
+            query = query.Where(e =>
+                e.FirstName.ToLower().Contains(term) ||
+                e.LastName.ToLower().Contains(term) ||
+                (e.FirstName + " " + e.LastName).ToLower().Contains(term) ||
+                e.Email.ToLower().Contains(term) ||
+                (e.PhoneNumber != null && e.PhoneNumber.Contains(term)) ||
+                e.Position.ToLower().Contains(term) ||
+                (e.Department != null && e.Department.Name.ToLower().Contains(term)));
+        }
+
+        if (request.DepartmentId.HasValue && request.DepartmentId.Value > 0)
+        {
+            query = query.Where(e => e.DepartmentId == request.DepartmentId.Value);
+        }
+
+        if (request.Status.HasValue)
+        {
+            query = query.Where(e => e.Status == request.Status.Value);
+        }
+
+        if (request.MinSalary.HasValue)
+        {
+            query = query.Where(e => e.Salary >= request.MinSalary.Value);
+        }
+        if (request.MaxSalary.HasValue)
+        {
+            query = query.Where(e => e.Salary <= request.MaxSalary.Value);
+        }
+
+        query = ApplySorting(query, request.SortBy, request.SortDescending);
+
+        var employees = await query
+            .Select(e => MapToDto(e))
+            .ToListAsync();
+
+        return _excelExportService.ExportEmployeesToExcel(employees);
     }
 }

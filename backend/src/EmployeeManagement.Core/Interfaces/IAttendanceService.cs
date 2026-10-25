@@ -14,4 +14,5 @@ public interface IAttendanceService
     Task<AttendanceDto> UpdateAsync(int id, UpdateAttendanceDto dto);
     Task DeleteAsync(int id);
     Task<AttendanceStatisticsDto> GetStatisticsAsync(int? month, int? year, int? departmentId);
+    Task<byte[]> ExportToExcelAsync(AttendancePagedRequest request);
 }

@@ -57,6 +57,7 @@ graph TD
   - Lọc theo **Khoảng lương tối thiểu/tối đa**.
 - **Sắp xếp linh hoạt (Sorting)**: Bấm vào tiêu đề cột bảng để sắp xếp tăng/giảm theo Họ tên, Email, Phòng ban, Chức vụ, Lương, Ngày vào làm, Trạng thái.
 - **Phân trang từ máy chủ (Server-side Pagination)**: Hỗ trợ tùy chọn 5, 10, 20, 50 bản ghi/trang, điều hướng trang nhanh.
+- **Xuất báo cáo Excel chuyên nghiệp (.xlsx)**: Xuất toàn bộ hoặc theo bộ lọc tìm kiếm/phòng ban/lương, tự động định dạng tiêu đề, màu sắc thương hiệu, định dạng tiền tệ VNĐ và hàng tính tổng quỹ lương.
 - **Validation chặt chẽ**:
   - Kiểm tra họ tên, định dạng email hợp lệ, kiểm tra email trùng lặp.
   - Số điện thoại chuẩn định dạng Việt Nam (`09...`, `03...`, `+84...`).
@@ -79,6 +80,7 @@ graph TD
   - Tỷ lệ chuyên cần (On-time Rate %).
   - Tổng số lượt đi muộn & về sớm để cảnh báo vi phạm kỷ luật lao động.
   - Tổng số giờ công tích lũy và số giờ trung bình/lượt.
+- **Xuất bảng chấm công ra Excel (.xlsx)**: Xuất chi tiết giờ vào, giờ ra, số giờ công, trạng thái và ghi chú theo từng khoảng thời gian hoặc phòng ban, kèm hàng tổng số giờ công.
 - **Bộ lọc & Tra cứu đa năng**:
   - Tìm kiếm theo họ tên nhân viên, chức danh, email, phòng ban.
   - Lọc theo phòng ban và trạng thái (Đúng giờ, Đi muộn, Về sớm, Đi muộn & Về sớm, Vắng mặt, Nghỉ phép).
@@ -149,7 +151,7 @@ Truy cập giao diện tại [http://localhost:4200](http://localhost:4200).
 
 Bộ kiểm thử unit test toàn diện cho các tầng logic nghiệp vụ, bảo mật, mã hóa mật khẩu, kiểm tra trùng lặp và phân trang:
 ```bash
-# Chạy toàn bộ 24 Unit Tests backend
+# Chạy toàn bộ 27 Unit Tests backend
 dotnet test backend/EmployeeManagement.sln
 
 # Kiểm tra build production của Frontend

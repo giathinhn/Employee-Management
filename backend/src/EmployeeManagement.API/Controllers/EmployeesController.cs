@@ -32,6 +32,22 @@ public class EmployeesController : ControllerBase
     /// <summary>
     /// Thống kê tổng quan nhân viên (tổng số, hoạt động, nghỉ phép, thôi việc, số phòng ban)
     /// </summary>
+    /// <summary>
+    /// Xuất danh sách nhân viên ra file Excel (.xlsx) theo bộ lọc
+    /// </summary>
+    [HttpGet("export-excel")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ExportExcel([FromQuery] PagedRequest request)
+    {
+        var fileBytes = await _employeeService.ExportToExcelAsync(request);
+        var fileName = $"Danh_Sach_Nhan_Vien_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(
+            fileBytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            fileName);
+    }
+
     [HttpGet("statistics")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(Dictionary<string, int>), StatusCodes.Status200OK)]

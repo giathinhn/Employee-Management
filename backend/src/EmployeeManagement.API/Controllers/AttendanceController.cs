@@ -33,6 +33,22 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Lấy chi tiết bản ghi chấm công theo Id
     /// </summary>
+    /// <summary>
+    /// Xuất bảng chấm công ra file Excel (.xlsx) theo bộ lọc
+    /// </summary>
+    [HttpGet("export-excel")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ExportExcel([FromQuery] AttendancePagedRequest request)
+    {
+        var fileBytes = await _attendanceService.ExportToExcelAsync(request);
+        var fileName = $"Bang_Cham_Cong_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(
+            fileBytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            fileName);
+    }
+
     [HttpGet("{id:int}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(AttendanceDto), StatusCodes.Status200OK)]

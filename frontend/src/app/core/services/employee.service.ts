@@ -63,4 +63,33 @@ export class EmployeeService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  exportExcel(request: PagedRequest): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (request.searchTerm && request.searchTerm.trim()) {
+      params = params.set('searchTerm', request.searchTerm.trim());
+    }
+    if (request.departmentId) {
+      params = params.set('departmentId', request.departmentId.toString());
+    }
+    if (request.status) {
+      params = params.set('status', request.status.toString());
+    }
+    if (request.minSalary !== undefined && request.minSalary !== null) {
+      params = params.set('minSalary', request.minSalary.toString());
+    }
+    if (request.maxSalary !== undefined && request.maxSalary !== null) {
+      params = params.set('maxSalary', request.maxSalary.toString());
+    }
+    if (request.sortBy) {
+      params = params.set('sortBy', request.sortBy);
+      params = params.set('sortDescending', (!!request.sortDescending).toString());
+    }
+
+    return this.http.get(`${this.apiUrl}/export-excel`, {
+      params,
+      responseType: 'blob'
+    });
+  }
 }

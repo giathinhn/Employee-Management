@@ -11,4 +11,5 @@ public interface IEmployeeService
     Task<EmployeeDto> UpdateAsync(int id, UpdateEmployeeDto dto);
     Task DeleteAsync(int id);
     Task<Dictionary<string, int>> GetStatisticsAsync();
+    Task<byte[]> ExportToExcelAsync(PagedRequest request);
 }
